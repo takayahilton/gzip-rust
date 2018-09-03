@@ -1,3 +1,4 @@
+use bit_vec::BitVec;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -6,17 +7,64 @@ pub enum HuffmanTree {
     Leaf { char: char, freq: u32 },
 }
 
-impl HuffmanTree {
+fn sort_char_frequency_list(char_frequency: &mut Vec<HuffmanTree>) {
+    char_frequency.sort_by_key(|cf| -(cf.root_frequency() as i32))
+}
 
-    fn frequency(&self) -> u32 {
+fn max_and_min(x: HuffmanTree, y: HuffmanTree) -> (HuffmanTree, HuffmanTree) {
+    if x.root_frequency() >= y.root_frequency() {
+        (x, y)
+    } else {
+        (y, x)
+    }
+}
+
+impl HuffmanTree {
+    pub fn encode(&self, s: &str) -> BitVec {
+        let table = self.encode_code();
+        let mut result = BitVec::new();
+        for c in s.chars() {
+            if let Some(ref v) = table.get(&c) {
+                result.extend(v.iter());
+            } else {
+                panic!("key not found");
+            }
+        }
+        result
+    }
+
+    pub fn decode(&self, from: &BitVec) -> String {
+        let mut result = String::new();
+        let mut _iter = from.iter();
+
+        fn go<I: Iterator<Item=bool>>(t: &HuffmanTree, root: &HuffmanTree, bit: Option<bool>, from: &mut I, result: &mut String) {
+            match t {
+                _ if bit.is_none() =>
+                    return,
+                &HuffmanTree::Leaf { char: c, .. } => {
+                    result.push(c);
+                    go(&root, &root, bit, from, result);
+                }
+                &HuffmanTree::Node { l: _, ref r, .. } if bit.unwrap() => {
+                    go(&r, &root, from.next(), from, result);
+                }
+
+                &HuffmanTree::Node { ref l, r: _, .. } if !bit.unwrap() => {
+                    go(&l, &root, from.next(), from, result);
+                }
+                &HuffmanTree::Node { .. } => unreachable!()
+            }
+        }
+        go(&self, &self, _iter.next(), &mut _iter, &mut result);
+        result
+    }
+
+
+    fn root_frequency(&self) -> u32 {
         match self {
             &HuffmanTree::Node { freq, .. } => freq,
             &HuffmanTree::Leaf { freq, .. } => freq,
         }
-    }
-
-    fn sort_char_frequency_list(char_frequency: &mut Vec<HuffmanTree>) {
-        char_frequency.sort_by_key(|cf| cf.frequency() )
     }
 
     pub fn new(s: &str) -> HuffmanTree {
@@ -33,21 +81,46 @@ impl HuffmanTree {
             .map(|cf| HuffmanTree::Leaf { char: cf.0, freq: cf.1 })
             .collect();
 
-        HuffmanTree::sort_char_frequency_list(&mut char_frequency);
+        sort_char_frequency_list(&mut char_frequency);
 
         while let Some(first) = char_frequency.pop() {
             if let Some(second) = char_frequency.pop() {
+                let f = first.root_frequency() + second.root_frequency();
+                let (max, min) = max_and_min(first, second);
+
                 let tree = HuffmanTree::Node {
-                    freq: first.frequency() + second.frequency(),
-                    l: Box::new(second),
-                    r: Box::new(first)
+                    freq: f,
+                    l: Box::new(max),
+                    r: Box::new(min),
                 };
                 char_frequency.push(tree);
-                HuffmanTree::sort_char_frequency_list(&mut char_frequency);
+                sort_char_frequency_list(&mut char_frequency);
             } else {
                 return first;
             }
         }
         panic!("empty string");
+    }
+
+    pub fn encode_code(&self) -> HashMap<char, BitVec> {
+        let mut codes: HashMap<char, BitVec> = HashMap::new();
+        fn go(t: &HuffmanTree, code: BitVec, codes: &mut HashMap<char, BitVec>) {
+            match t {
+                &HuffmanTree::Leaf { char: c, .. } => {
+                    codes.insert(c, code);
+                    ()
+                }
+                &HuffmanTree::Node { ref l, ref r, .. } => {
+                    let mut left_code = code.clone();
+                    let mut right_code = code.clone();
+                    left_code.push(false);
+                    right_code.push(true);
+                    go(&l, left_code, codes);
+                    go(&r, right_code, codes);
+                }
+            }
+        }
+        go(self, BitVec::new(), &mut codes);
+        codes
     }
 }
