@@ -3,10 +3,18 @@ use std::collections::*;
 use std::cmp::Ordering;
 
 
-#[derive(Debug, PartialOrd, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum HuffmanTree {
     Node { freq: u32, l: Box<HuffmanTree>, r: Box<HuffmanTree> },
     Leaf { char: char, freq: u32 },
+}
+
+impl PartialOrd for HuffmanTree {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.root_frequency()
+            .partial_cmp(&other.root_frequency())
+            .map(|o| o.reverse())
+    }
 }
 
 impl Ord for HuffmanTree {
@@ -31,7 +39,7 @@ impl HuffmanTree {
             if let Some(ref v) = table.get(&c) {
                 result.extend(v.iter());
             } else {
-                panic!("key not found");
+                panic!("key not found, {}", &c);
             }
         }
         result
