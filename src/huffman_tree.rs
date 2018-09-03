@@ -39,8 +39,10 @@ impl HuffmanTree {
 
         fn go<I: Iterator<Item=bool>>(t: &HuffmanTree, root: &HuffmanTree, bit: Option<bool>, from: &mut I, result: &mut String) {
             match t {
-                _ if bit.is_none() =>
-                    return,
+                &HuffmanTree::Leaf { char: c, .. } if bit.is_none() => {
+                    result.push(c);
+                    return;
+                }
                 &HuffmanTree::Leaf { char: c, .. } => {
                     result.push(c);
                     go(&root, &root, bit, from, result);
