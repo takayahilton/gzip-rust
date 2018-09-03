@@ -1,14 +1,18 @@
 use bit_vec::BitVec;
-use std::collections::HashMap;
+use std::collections::*;
+use std::cmp::Ordering;
 
-#[derive(Debug)]
+
+#[derive(Debug, PartialOrd, PartialEq, Eq)]
 pub enum HuffmanTree {
     Node { freq: u32, l: Box<HuffmanTree>, r: Box<HuffmanTree> },
     Leaf { char: char, freq: u32 },
 }
 
-fn sort_char_frequency_list(char_frequency: &mut Vec<HuffmanTree>) {
-    char_frequency.sort_by_key(|cf| -(cf.root_frequency() as i32))
+impl Ord for HuffmanTree {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.root_frequency().cmp(&other.root_frequency()).reverse()
+    }
 }
 
 fn max_and_min(x: HuffmanTree, y: HuffmanTree) -> (HuffmanTree, HuffmanTree) {
@@ -78,12 +82,10 @@ impl HuffmanTree {
                 frequency.insert(c, 1);
             }
         }
-        let mut char_frequency: Vec<HuffmanTree> = frequency
+        let mut char_frequency: BinaryHeap<HuffmanTree> = frequency
             .into_iter()
             .map(|cf| HuffmanTree::Leaf { char: cf.0, freq: cf.1 })
             .collect();
-
-        sort_char_frequency_list(&mut char_frequency);
 
         while let Some(first) = char_frequency.pop() {
             if let Some(second) = char_frequency.pop() {
@@ -96,7 +98,6 @@ impl HuffmanTree {
                     r: Box::new(min),
                 };
                 char_frequency.push(tree);
-                sort_char_frequency_list(&mut char_frequency);
             } else {
                 return first;
             }
