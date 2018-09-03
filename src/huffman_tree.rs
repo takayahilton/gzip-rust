@@ -119,7 +119,6 @@ impl HuffmanTree {
             match t {
                 &HuffmanTree::Leaf { char: c, .. } => {
                     codes.insert(c, code);
-                    ()
                 }
                 &HuffmanTree::Node { ref l, ref r, .. } => {
                     let mut left_code = code.clone();

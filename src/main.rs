@@ -21,7 +21,7 @@ fn main() {
     println!("raw str length {:?}", raw_text.len());
 
     let decoded = ht.decode(&encoded);
-    println!("{:?}", &decoded);
+    println!("{}", &decoded);
 
     println!("{}", &raw_text);
 
