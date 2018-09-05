@@ -1,6 +1,7 @@
 use bit_vec::BitVec;
 use std::collections::*;
 use std::cmp::Ordering;
+use std::cmp::Reverse;
 
 
 #[derive(Debug, PartialEq, Eq)]
@@ -13,13 +14,12 @@ impl PartialOrd for HuffmanTree {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         self.root_frequency()
             .partial_cmp(&other.root_frequency())
-            .map(|o| o.reverse())
     }
 }
 
 impl Ord for HuffmanTree {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.root_frequency().cmp(&other.root_frequency()).reverse()
+        self.root_frequency().cmp(&other.root_frequency())
     }
 }
 
@@ -90,13 +90,13 @@ impl HuffmanTree {
                 frequency.insert(c, 1);
             }
         }
-        let mut char_frequency: BinaryHeap<HuffmanTree> = frequency
+        let mut char_frequency: BinaryHeap<Reverse<HuffmanTree>> = frequency
             .into_iter()
-            .map(|cf| HuffmanTree::Leaf { char: cf.0, freq: cf.1 })
+            .map(|cf| Reverse(HuffmanTree::Leaf { char: cf.0, freq: cf.1 }))
             .collect();
 
-        while let Some(first) = char_frequency.pop() {
-            if let Some(second) = char_frequency.pop() {
+        while let Some(Reverse(first)) = char_frequency.pop() {
+            if let Some(Reverse(second)) = char_frequency.pop() {
                 let f = first.root_frequency() + second.root_frequency();
                 let (max, min) = max_and_min(first, second);
 
@@ -105,7 +105,7 @@ impl HuffmanTree {
                     l: Box::new(max),
                     r: Box::new(min),
                 };
-                char_frequency.push(tree);
+                char_frequency.push(Reverse(tree));
             } else {
                 return first;
             }
