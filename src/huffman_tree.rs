@@ -50,23 +50,23 @@ impl HuffmanTree {
         let mut _iter = from.iter();
 
         fn go<I: Iterator<Item=bool>>(t: &HuffmanTree, root: &HuffmanTree, bit: Option<bool>, from: &mut I, result: &mut String) {
-            match t {
-                &HuffmanTree::Leaf { char: c, .. } if bit.is_none() => {
+            match *t {
+                HuffmanTree::Leaf { char: c, .. } if bit.is_none() => {
                     result.push(c);
                     return;
                 }
-                &HuffmanTree::Leaf { char: c, .. } => {
+                HuffmanTree::Leaf { char: c, .. } => {
                     result.push(c);
                     go(&root, &root, bit, from, result);
                 }
-                &HuffmanTree::Node { l: _, ref r, .. } if bit.unwrap() => {
+                HuffmanTree::Node { ref r, .. } if bit.unwrap() => {
                     go(&r, &root, from.next(), from, result);
                 }
 
-                &HuffmanTree::Node { ref l, r: _, .. } if !bit.unwrap() => {
+                HuffmanTree::Node { ref l, .. } if !bit.unwrap() => {
                     go(&l, &root, from.next(), from, result);
                 }
-                &HuffmanTree::Node { .. } => unreachable!()
+                HuffmanTree::Node { .. } => unreachable!()
             }
         }
         go(&self, &self, _iter.next(), &mut _iter, &mut result);
@@ -75,9 +75,9 @@ impl HuffmanTree {
 
 
     fn root_frequency(&self) -> u32 {
-        match self {
-            &HuffmanTree::Node { freq, .. } => freq,
-            &HuffmanTree::Leaf { freq, .. } => freq,
+        match *self {
+            HuffmanTree::Node { freq, .. } => freq,
+            HuffmanTree::Leaf { freq, .. } => freq,
         }
     }
 
@@ -116,11 +116,11 @@ impl HuffmanTree {
     pub fn encode_code(&self) -> HashMap<char, BitVec> {
         let mut codes: HashMap<char, BitVec> = HashMap::new();
         fn go(t: &HuffmanTree, code: BitVec, codes: &mut HashMap<char, BitVec>) {
-            match t {
-                &HuffmanTree::Leaf { char: c, .. } => {
+            match *t {
+                HuffmanTree::Leaf { char: c, .. } => {
                     codes.insert(c, code);
                 }
-                &HuffmanTree::Node { ref l, ref r, .. } => {
+                HuffmanTree::Node { ref l, ref r, .. } => {
                     let mut left_code = code.clone();
                     let mut right_code = code.clone();
                     left_code.push(false);
